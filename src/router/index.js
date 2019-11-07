@@ -1,8 +1,12 @@
 import Vue from 'vue'
+import BootstrapVue from 'bootstrap-vue'
 import VueRouter from 'vue-router'
+import VueResource from 'vue-resource'
 import Home from '../views/Home.vue'
 
 Vue.use(VueRouter)
+Vue.use(BootstrapVue)
+Vue.use(VueResource)
 
 const routes = [
   {
