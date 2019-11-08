@@ -1,24 +1,39 @@
-# recording_studio_web
+# Recording Studio Web
 
-## Project setup
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FAppleHolic%2Frecording_studio_web)](https://hits.seeyoufarm.com)
+
+## Intro
+
+*Goals*
+
+1. Make it easy to manage lists and manage recording voices in situations where text is given.
+2. Make interface for prototyping in cases that are voice to voice, X to voice.
+
+This repository is on initial version.
+
+## How to use
+
+- Environment : MacOS X
+
+- Installation
+
 ```
-npm install
+$ brew install npm
+$ npm install vue vue-cli -g
+$ npm install
 ```
 
-### Compiles and hot-reloads for development
+- Run it with npm
+
 ```
-npm run serve
+$ npm run serve
 ```
 
-### Compiles and minifies for production
+- Use Docker
+
 ```
-npm run build
+$ docker build --tag recording_studio_web:latest .
+$ docker run --rm -it -p 8080:8080 recording_studio_web:latest
 ```
 
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+And then, you can see recording and sound components on localhost:8080!
