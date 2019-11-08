@@ -1,0 +1,43 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow:visible;
+}
+
+/*  Main Screen Components */
+* {
+  font-size: 1em;
+}
+
+@media only screen and (max-height: 768px) {
+  /* rules that only apply for canvases narrower than 1000px */
+  html, body {
+    min-height: 768px;
+    min-width: 1024px;
+    height: 100%;
+    overflow: visible;
+  }
+}
+
+/*  border twinkling  */
+@-webkit-keyframes borderBlink {
+    from, to {
+        border-color: transparent
+    }
+    50% {
+        border-color: rgba(255, 255, 0, 0.5)
+    }
+}
+@keyframes borderBlink {
+    from, to {
+        border-color: transparent
+    }
+    50% {
+        border-color: rgba(255, 255, 0, 0.5)
+    }
+}
+.borderBlink {
+  border-width: 2px;
+  -webkit-animation: borderBlink 1s step-end infinite;
+  animation: borderBlink 1s step-end infinite;
+}
