@@ -55,6 +55,8 @@ export default {
       }),
       recordedSound: { idx: 0, url: '', blob: ''},
       uploadStatus: null,
+      // page information
+      nb_pages: 0,
     }
   },
   methods: {
@@ -90,7 +92,35 @@ export default {
       this.isUploading = false
       this.uploadStatus = status
       setTimeout(() => {this.uploadStatus = null}, 1500)
-    }
+    },
+    uploadRecord (key) {
+      let blob = this.recordedSound.blob
+      // send twice, first. master file
+      var formData = new FormData();
+
+      formData.append('file', new File([blob], this.getRecordFileName(key), {
+        type: 'audio/wav',
+      }))
+
+      this.$http.post(this.getUploadUrl(key), formData, {}, {
+        headers: {
+          'Content-Type': 'audio/wav',
+        }
+      }).then(res => {
+        console.log('Complete', res)
+      }, res => {
+        console.log('Uploading has been failed', res)
+      })
+    },
+    // url methods
+    setNumberPages () {
+      let _this = this
+      _this.$http.get('page-numbers/all').then(res => {
+        _this.nb_pages = res['body']['nb_pages']
+      }, res => {
+        console.log('falied to load page numbers', res)
+      })
+    },
   },
   watch: {
     soundUrl (newSoundUrl) {
@@ -107,6 +137,9 @@ export default {
         this.$emit('update:soundUrl', this.soundUrl)
       }
     },
+  },
+  created: function () {
+    this.setNumberPages()
   },
   computed: {
     attemptsLeft () {

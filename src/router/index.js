@@ -8,6 +8,8 @@ Vue.use(VueRouter)
 Vue.use(BootstrapVue)
 Vue.use(VueResource)
 
+Vue.http.options.root = 'http://127.0.0.1:8888/v1/record'
+
 const routes = [
   {
     path: '/',
