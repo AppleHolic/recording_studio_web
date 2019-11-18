@@ -11,6 +11,8 @@
 
 This repository is on initial version.
 
+#### It's under development.
+
 ## How to use
 
 - Environment : MacOS X
