@@ -1,29 +1,80 @@
 <template>
   <div class="container">
-    <!--  button part -->
-    <div>
-      <!--  start, pause, restart-->
-      <b-button class="record-btn"
-        id="record_btn"
-        @click="toggleRecorder"
-        v-bind:class="{'borderBlink': isMicStatus && soundUrl === '' && isRecorderEnabled}"
-        v-bind:disabled="!isRecorderEnabled"
-        >
-        <i class="zmdi zmdi-hc-2x" v-bind:class="{ 'zmdi-pause': isRecording && !isMicStatus, 'zmdi-mic': isMicStatus}"></i>
-      </b-button>
-      <!--  stop  -->
-      <b-button class="record-btn"
-        id="stop_record"
-        @click="stopRecorder"
-        v-bind:class="{'borderBlink': isRecording && !isMicStatus && isRecorderEnabled}"
-        v-bind:disabled="!isRecorderEnabled"
-        >
-        <i class="zmdi zmdi-hc-2x zmdi-stop"></i>
-      </b-button>
+    <div id="script_panel" class="col">
+      <div id="script_content">
+
+      </div>
+      <div id="script_list">
+        <div class="col" id="script-table" ref="script-table">
+            <b-table
+                  show-empty
+                  stacked="md"
+                  :items="scriptData"
+                  :fields="tfields"
+             >
+              <template slot-scope="row" slot="index">
+                <b-button variant="outline-warning sm"
+                  :id="'sbtn_'+row.value"
+                  :ref="'sbtn_'+row.value"
+                  :pressed="row.value == curTrackIdx"
+                  @click="clickTime(row.value)">
+                  {{ row.value }}
+                </b-button>
+              </template>
+              <template slot-scope="row" slot="start" class="table-row">
+                <b-form-input
+                  v-model="row.value"
+                  :formatter="floatFormat"
+                  type="number"
+                  placeholder="script"
+                  @change="fieldChangeHandler('start', row.value, row.index)"></b-form-input>
+              </template>
+              <template slot-scope="row" slot="end" class="table-row">
+                <b-form-input
+                  v-model="row.value"
+                  :formatter="floatFormat"
+                  type="number"
+                  placeholder="script"
+                  @change="fieldChangeHandler('end', row.value, row.index)"></b-form-input>
+              </template>
+              <template slot="script" slot-scope="row">
+                <b-form-textarea
+                     placeholder="Empty"
+                     :value="row.value"
+                     :rows="2"
+                     :max-rows="2"
+                     @input="function(e){return fieldChangeHandler('script', e, row.index)}">
+                </b-form-textarea>
+              </template>
+            </b-table>
+          </div>
+      </div>
     </div>
-    <!--  information part  -->
-    <div style="height: 2vh"/>
-    <h2> {{ recordedTime }} </h2>
+    <div id="record_panel" class="col">
+      <div>
+        <!--  start, pause, restart-->
+        <b-button class="record-btn"
+          id="record_btn"
+          @click="toggleRecorder"
+          v-bind:class="{'borderBlink': isMicStatus && soundUrl === '' && isRecorderEnabled}"
+          v-bind:disabled="!isRecorderEnabled"
+          >
+          <i class="zmdi zmdi-hc-2x" v-bind:class="{ 'zmdi-pause': isRecording && !isMicStatus, 'zmdi-mic': isMicStatus}"></i>
+        </b-button>
+        <!--  stop  -->
+        <b-button class="record-btn"
+          id="stop_record"
+          @click="stopRecorder"
+          v-bind:class="{'borderBlink': isRecording && !isMicStatus && isRecorderEnabled}"
+          v-bind:disabled="!isRecorderEnabled"
+          >
+          <i class="zmdi zmdi-hc-2x zmdi-stop"></i>
+        </b-button>
+      </div>
+      <!--  information part  -->
+      <div style="height: 2vh"/>
+      <h2> {{ recordedTime }} </h2>
+    </div>
   </div>
 </template>
 <script>
@@ -57,6 +108,9 @@ export default {
       uploadStatus: null,
       // page information
       nb_pages: 0,
+      recordData : [
+        {'key': '', 'wave': '', 'recorded': ''},
+      ],
     }
   },
   methods: {
@@ -121,6 +175,14 @@ export default {
         console.log('falied to load page numbers', res)
       })
     },
+    getRecordDataPage ( pageIdx ) {
+      let _this = this
+      _this.$http.get('page/all/'+pageIdx).then(res => {
+        _this.recordData = res['body']['info']
+      }, res => {
+        console.log('falied to load page numbers', res)
+      })
+    }
   },
   watch: {
     soundUrl (newSoundUrl) {
