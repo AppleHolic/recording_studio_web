@@ -9,42 +9,36 @@
             <b-table
                   show-empty
                   stacked="md"
-                  :items="scriptData"
-                  :fields="tfields"
+                  :items="recordData"
+                  :fields="recordFields"
              >
-              <template slot-scope="row" slot="index">
+             <!-- [ 'key', 'text', 'wave', 'recorded' ] -->
+              <template slot-scope="row" slot="key">
                 <b-button variant="outline-warning sm"
-                  :id="'sbtn_'+row.value"
-                  :ref="'sbtn_'+row.value"
-                  :pressed="row.value == curTrackIdx"
-                  @click="clickTime(row.value)">
+                  :id="'record_'+row.value"
+                  :ref="'record_'+row.value"
+                  @click="console.log(row.value)">
                   {{ row.value }}
                 </b-button>
               </template>
-              <template slot-scope="row" slot="start" class="table-row">
-                <b-form-input
-                  v-model="row.value"
-                  :formatter="floatFormat"
-                  type="number"
-                  placeholder="script"
-                  @change="fieldChangeHandler('start', row.value, row.index)"></b-form-input>
+              <template slot-scope="row" slot="text" class="table-row">
+                <p> {{ row.value }} </p>
               </template>
-              <template slot-scope="row" slot="end" class="table-row">
-                <b-form-input
-                  v-model="row.value"
-                  :formatter="floatFormat"
-                  type="number"
-                  placeholder="script"
-                  @change="fieldChangeHandler('end', row.value, row.index)"></b-form-input>
+              <template slot-scope="row" slot="wave" class="table-row">
+                <!-- sample sounds -->
+                <div class="audio-panel">
+                  <audio controls="" name="media" ref="player">
+                    <source v-bind:src="row.value" type="audio/wav" v-if="row.value !== ''">
+                  </audio>
+                </div>
               </template>
-              <template slot="script" slot-scope="row">
-                <b-form-textarea
-                     placeholder="Empty"
-                     :value="row.value"
-                     :rows="2"
-                     :max-rows="2"
-                     @input="function(e){return fieldChangeHandler('script', e, row.index)}">
-                </b-form-textarea>
+              <template slot-scope="row" slot="recorded" class="table-row">
+                <!-- recorded sounds -->
+                <div class="audio-panel">
+                  <audio controls="" name="media" ref="player">
+                    <source v-bind:src="row.value" type="audio/wav" v-if="row.value !== ''">
+                  </audio>
+                </div>
               </template>
             </b-table>
           </div>
@@ -109,8 +103,12 @@ export default {
       // page information
       nb_pages: 0,
       recordData : [
-        {'key': '', 'wave': '', 'recorded': ''},
+        {'key': '', 'text': '', 'wave': '', 'recorded': ''},
       ],
+      recordActiveData : {
+        'key': '', 'text': '', 'wave': '', 'recorded': ''
+      },
+      recordFields: [ 'key', 'text', 'wave', 'recorded' ]
     }
   },
   methods: {
@@ -156,7 +154,7 @@ export default {
         type: 'audio/wav',
       }))
 
-      this.$http.post(this.getUploadUrl(key), formData, {}, {
+      this.$http.post('item/' + key, formData, {}, {
         headers: {
           'Content-Type': 'audio/wav',
         }
@@ -177,8 +175,17 @@ export default {
     },
     getRecordDataPage ( pageIdx ) {
       let _this = this
-      _this.$http.get('page/all/'+pageIdx).then(res => {
+      _this.$http.get('page/all/' + pageIdx).then(res => {
         _this.recordData = res['body']['info']
+      }, res => {
+        console.log('falied to load page numbers', res)
+      })
+    },
+    getRecordItem ( key ) {
+      let _this = this
+      _this.$http.get('item/' + key).then(res => {
+        _this.recordActiveData = res['body']
+        console.log(_this.recordActiveData)
       }, res => {
         console.log('falied to load page numbers', res)
       })
@@ -202,6 +209,7 @@ export default {
   },
   created: function () {
     this.setNumberPages()
+    this.getRecordDataPage (0)
   },
   computed: {
     attemptsLeft () {
