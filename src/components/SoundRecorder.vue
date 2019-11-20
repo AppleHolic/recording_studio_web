@@ -1,73 +1,60 @@
 <template>
   <div class="container">
-    <div id="script_panel" class="col">
-      <div id="script_content">
-
-      </div>
-      <div id="script_list">
-        <div class="col" id="script-table" ref="script-table">
-            <b-table
+    <div class="row">
+      <div id="script_panel" class="col-8">
+        <div id="script_list">
+          <div class="col" id="script-table" ref="script-table">
+            <!-- v-slot:cell(index)="data" -->
+              <b-table
                   show-empty
-                  stacked="md"
-                  :items="recordData"
-                  :fields="recordFields"
-             >
-             <!-- [ 'key', 'text', 'wave', 'recorded' ] -->
-              <template slot-scope="row" slot="key">
-                <b-button variant="outline-warning sm"
-                  :id="'record_'+row.value"
-                  :ref="'record_'+row.value"
-                  @click="console.log(row.value)">
-                  {{ row.value }}
-                </b-button>
-              </template>
-              <template slot-scope="row" slot="text" class="table-row">
-                <p> {{ row.value }} </p>
-              </template>
-              <template slot-scope="row" slot="wave" class="table-row">
-                <!-- sample sounds -->
-                <div class="audio-panel">
-                  <audio controls="" name="media" ref="player">
-                    <source v-bind:src="row.value" type="audio/wav" v-if="row.value !== ''">
-                  </audio>
-                </div>
-              </template>
-              <template slot-scope="row" slot="recorded" class="table-row">
-                <!-- recorded sounds -->
-                <div class="audio-panel">
-                  <audio controls="" name="media" ref="player">
-                    <source v-bind:src="row.value" type="audio/wav" v-if="row.value !== ''">
-                  </audio>
-                </div>
-              </template>
-            </b-table>
-          </div>
+                    stacked="md"
+                    :items="recordData"
+                    :fields="recordFields"
+               >
+                 <template v-slot:cell(key)="data">
+                   <b-button variant="outline-primary"
+                     :id="'record_'+data.value"
+                     :ref="'record_'+data.value"
+                     @click="console.log(data.value)">
+                     {{ data.value }}
+                   </b-button>
+                 </template>
+                 <template v-slot:cell(text)="data">
+                   <p> {{ data.value }} </p>
+                 </template>
+                 <template v-slot:cell(recorded)="data">
+                   <p v-if="data.value !== ''"> Recorded </p>
+                   <p v-else> Not Recorded </p>
+                 </template>
+              </b-table>
+            </div>
+        </div>
       </div>
-    </div>
-    <div id="record_panel" class="col">
-      <div>
-        <!--  start, pause, restart-->
-        <b-button class="record-btn"
-          id="record_btn"
-          @click="toggleRecorder"
-          v-bind:class="{'borderBlink': isMicStatus && soundUrl === '' && isRecorderEnabled}"
-          v-bind:disabled="!isRecorderEnabled"
-          >
-          <i class="zmdi zmdi-hc-2x" v-bind:class="{ 'zmdi-pause': isRecording && !isMicStatus, 'zmdi-mic': isMicStatus}"></i>
-        </b-button>
-        <!--  stop  -->
-        <b-button class="record-btn"
-          id="stop_record"
-          @click="stopRecorder"
-          v-bind:class="{'borderBlink': isRecording && !isMicStatus && isRecorderEnabled}"
-          v-bind:disabled="!isRecorderEnabled"
-          >
-          <i class="zmdi zmdi-hc-2x zmdi-stop"></i>
-        </b-button>
+      <div id="record_panel" class="col-4">
+        <div>
+          <!--  start, pause, restart-->
+          <b-button class="record-btn"
+            id="record_btn"
+            @click="toggleRecorder"
+            v-bind:class="{'borderBlink': isMicStatus && soundUrl === '' && isRecorderEnabled}"
+            v-bind:disabled="!isRecorderEnabled"
+            >
+            <i class="zmdi zmdi-hc-2x" v-bind:class="{ 'zmdi-pause': isRecording && !isMicStatus, 'zmdi-mic': isMicStatus}"></i>
+          </b-button>
+          <!--  stop  -->
+          <b-button class="record-btn"
+            id="stop_record"
+            @click="stopRecorder"
+            v-bind:class="{'borderBlink': isRecording && !isMicStatus && isRecorderEnabled}"
+            v-bind:disabled="!isRecorderEnabled"
+            >
+            <i class="zmdi zmdi-hc-2x zmdi-stop"></i>
+          </b-button>
+        </div>
+        <!--  information part  -->
+        <div style="height: 2vh"/>
+        <h2> {{ recordedTime }} </h2>
       </div>
-      <!--  information part  -->
-      <div style="height: 2vh"/>
-      <h2> {{ recordedTime }} </h2>
     </div>
   </div>
 </template>
@@ -103,13 +90,15 @@ export default {
       // page information
       nb_pages: 0,
       recordData : [
-        {'key': '', 'text': '', 'wave': '', 'recorded': ''},
+        {'key': '', 'text': '', 'recorded': '', 'wave': ''},
       ],
       recordActiveData : {
-        'key': '', 'text': '', 'wave': '', 'recorded': ''
+        'key': '', 'text': ''
       },
-      recordFields: [ 'key', 'text', 'wave', 'recorded' ]
+      recordFields: ['key', 'text', 'recorded']
     }
+  },
+  mounted: function () {
   },
   methods: {
     toggleRecorder () {
@@ -173,10 +162,37 @@ export default {
         console.log('falied to load page numbers', res)
       })
     },
+    convertData(raw) {
+      var rawLength = raw.length;
+      var array = new Uint8Array(new ArrayBuffer(rawLength));
+      for(var i = 0; i < rawLength; i++) {
+        array[i] = raw.charCodeAt(i);
+      }
+      return array;
+    },
+    getBlobUrl (raw_str) {
+      let binary = this.convertData(raw_str);
+      let blob = new Blob([binary], {type: 'audio/wav'});
+      return URL.createObjectURL(blob)
+    },
+    loadPageWaves () {
+      for (var idx = 0; idx < this.recordData.length ; idx ++){
+        let record = this.recordData[idx]
+        let sample = record['wave']
+        let recorded = record['recorded']
+        if (sample !== '') {
+          this.recordData[idx]['wave'] = this.getBlobUrl(sample)
+        }
+        if (recorded !== '') {
+          this.recordData[idx]['recorded'] = this.getBlobUrl(recorded)
+        }
+      }
+    },
     getRecordDataPage ( pageIdx ) {
       let _this = this
       _this.$http.get('page/all/' + pageIdx).then(res => {
         _this.recordData = res['body']['info']
+        console.log(_this.recordData)
       }, res => {
         console.log('falied to load page numbers', res)
       })
@@ -185,7 +201,6 @@ export default {
       let _this = this
       _this.$http.get('item/' + key).then(res => {
         _this.recordActiveData = res['body']
-        console.log(_this.recordActiveData)
       }, res => {
         console.log('falied to load page numbers', res)
       })
