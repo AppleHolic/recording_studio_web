@@ -14,6 +14,11 @@ This repository is on initial version.
 #### It's under development.
 
 - Related Repository : https://github.com/AppleHolic/recording_studio_api
+- Initial Version :
+  - Supports upload, download, list-up, pagination
+  - KSS Dataset (https://www.kaggle.com/bryanpark/korean-single-speaker-speech-dataset)
+  - Ongoing
+    - Support LJSpeech datatset, Better paginaiton
 
 ## How to use
 
