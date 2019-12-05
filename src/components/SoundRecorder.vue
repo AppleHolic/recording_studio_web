@@ -1,36 +1,57 @@
 <template>
   <div class="container">
-    <div class="row">
-      <div id="script_panel" class="col-8">
+    <b-row>
+      <b-col sm="2">
+        <label for="pageField">Jump to : </label>
+      </b-col>
+      <b-col sm="2">
+        <b-form-input id="pageField" type="number"></b-form-input>
+      </b-col>
+      <b-col sm="1">
+        <b-button variant="outline-primary">Go</b-button>
+      </b-col>
+      <b-col sm="3">
+        <b-form-group>
+          <b-form-radio v-model="pageSelected" name="all" value="all">All</b-form-radio>
+          <b-form-radio v-model="pageSelected" name="un-recorded" value="unrec">Un-Recorded</b-form-radio>
+        </b-form-group>
+      </b-col>
+    </b-row>
+    <b-row>
+      <b-col id="script_panel" sm="8">
         <div id="script_list">
           <div class="col" id="script-table" ref="script-table">
-            <!-- v-slot:cell(index)="data" -->
-              <b-table
-                  show-empty
-                    stacked="md"
-                    :items="recordData"
-                    :fields="recordFields"
-               >
-                 <template v-slot:cell(key)="data">
-                   <b-button variant="outline-primary"
-                     :id="'record_'+data.value"
-                     :ref="'record_'+data.value"
-                     @click="console.log(data.value)">
-                     {{ data.value }}
-                   </b-button>
-                 </template>
-                 <template v-slot:cell(text)="data">
-                   <p> {{ data.value }} </p>
-                 </template>
-                 <template v-slot:cell(recorded)="data">
-                   <p v-if="data.value !== ''"> Recorded </p>
-                   <p v-else> Not Recorded </p>
-                 </template>
-              </b-table>
-            </div>
+            <b-row>
+
+            </b-row>
+            <div style="height: 2vh"/>
+
+            <b-table
+                show-empty
+                  stacked="md"
+                  :items="recordData"
+                  :fields="recordFields"
+             >
+               <template v-slot:cell(key)="data">
+                 <b-button variant="outline-primary"
+                   :id="'record_'+data.value"
+                   :ref="'record_'+data.value"
+                   @click="setSelectedKey(data.value)">
+                   {{ data.value }}
+                 </b-button>
+               </template>
+               <template v-slot:cell(text)="data">
+                 <p> {{ data.value }} </p>
+               </template>
+               <template v-slot:cell(recorded)="data">
+                 <p v-if="data.value !== ''"> Recorded </p>
+                 <p v-else> Not Recorded </p>
+               </template>
+            </b-table>
+          </div>
         </div>
-      </div>
-      <div id="record_panel" class="col-4">
+      </b-col>
+      <b-col id="record_panel" sm="4" style="padding-top: 5vh">
         <div>
           <!--  start, pause, restart-->
           <b-button class="record-btn"
@@ -41,6 +62,9 @@
             >
             <i class="zmdi zmdi-hc-2x" v-bind:class="{ 'zmdi-pause': isRecording && !isMicStatus, 'zmdi-mic': isMicStatus}"></i>
           </b-button>
+          <b-tooltip target="record_btn" triggers="hover">
+            Start record
+          </b-tooltip>
           <!--  stop  -->
           <b-button class="record-btn"
             id="stop_record"
@@ -50,12 +74,43 @@
             >
             <i class="zmdi zmdi-hc-2x zmdi-stop"></i>
           </b-button>
+          <b-tooltip target="stop_record" triggers="hover">
+            Stop record
+          </b-tooltip>
+          <b-button class="record-btn" id="delete_rec">
+            <i class="zmdi zmdi-hc-2x zmdi-delete"></i>
+          </b-button>
+          <b-tooltip target="delete_rec" triggers="hover">
+            Delete current recorded audio
+          </b-tooltip>
+          <b-button class="record-btn" id="upload_rec" @click="uploadRecord()">
+            <i class="zmdi zmdi-hc-2x zmdi-upload"></i>
+          </b-button>
+          <b-tooltip target="upload_rec" triggers="hover">
+            Upload/Update current recorded audio
+          </b-tooltip>
         </div>
         <!--  information part  -->
         <div style="height: 2vh"/>
         <h2> {{ recordedTime }} </h2>
-      </div>
-    </div>
+
+        <div style="height: 4vh"/>
+        <h4> Recorded Sound </h4>
+
+        <!-- recorded sounds -->
+        <audio controls="" name="media" ref="player">
+          <source v-bind:src="soundUrl" type="audio/wav" v-if="soundUrl !== ''">
+        </audio>
+
+        <div style="height: 4vh"/>
+        <h4> Selected Sample : {{ selectedKey }} </h4>
+
+        <audio controls="" name="media" ref="sample_player">
+          <source v-bind:src="sampleSoundUrl" type="audio/wav" v-if="sampleSoundUrl !== ''">
+        </audio>
+
+      </b-col>
+    </b-row>
   </div>
 </template>
 <script>
@@ -95,10 +150,21 @@ export default {
       recordActiveData : {
         'key': '', 'text': ''
       },
-      recordFields: ['key', 'text', 'recorded']
+      recordFields: ['key', 'text', 'recorded'],
+      sampleBlob: '',
+      jumpIndex: 0,
+      selectedKey: '',
+      pageSelected: 'all',
+      sampleSoundUrl: '',
     }
   },
   mounted: function () {
+    this.$watch('soundUrl', function() {
+        this.$refs.player.load()
+    });
+    this.$watch('sampleSoundUrl', function() {
+        this.$refs.sample_player.load()
+    });
   },
   methods: {
     toggleRecorder () {
@@ -134,16 +200,16 @@ export default {
       this.uploadStatus = status
       setTimeout(() => {this.uploadStatus = null}, 1500)
     },
-    uploadRecord (key) {
+    uploadRecord () {
       let blob = this.recordedSound.blob
       // send twice, first. master file
       var formData = new FormData();
 
-      formData.append('file', new File([blob], this.getRecordFileName(key), {
+      formData.append('file', new File([blob], 'file', {
         type: 'audio/wav',
       }))
 
-      this.$http.post('item/' + key, formData, {}, {
+      this.$http.post('item/' + this.selectedKey, formData, {}, {
         headers: {
           'Content-Type': 'audio/wav',
         }
@@ -188,6 +254,28 @@ export default {
         }
       }
     },
+    setSelectedSampleBlob ( key ) {
+      let _this = this
+      _this.$http.get('audio/wave/' + key, {responseType: 'arraybuffer'}).then(res => {
+        var blob = new Blob([res.data], {type: 'audio/wav'});
+        _this.sampleBlob = blob
+        _this.sampleSoundUrl = URL.createObjectURL(_this.sampleBlob)
+      }, res => {
+        console.log('falied to load sample', res)
+      })
+      _this.$http.get('audio/recorded/' + key, {responseType: 'arraybuffer'}).then(res => {
+        var blob = new Blob([res.data], {type: 'audio/wav'});
+        _this.recordedSound['blob'] = blob
+        _this.recordedSound['url'] = URL.createObjectURL(_this.recordedSound['blob'])
+      }, res => {
+        console.log('falied to load sample', res)
+      })
+    },
+    setSelectedKey ( key ) {
+      this.setSelectedSampleBlob(key)
+      this.selectedKey = key
+      this.recordedSound = { idx: 0, url: '', blob: ''}
+    },
     getRecordDataPage ( pageIdx ) {
       let _this = this
       _this.$http.get('page/all/' + pageIdx).then(res => {
@@ -210,6 +298,9 @@ export default {
     soundUrl (newSoundUrl) {
       this.$emit('update:soundUrl', newSoundUrl)
     },
+    sampleSoundUrl (newSampleUrl) {
+      this.$emit('update:sampleSoundUrl', newSampleUrl)
+    },
     soundBlob (newSoundBlob) {
       this.$emit('update:soundBlob', newSoundBlob)
     },
@@ -225,8 +316,14 @@ export default {
   created: function () {
     this.setNumberPages()
     this.getRecordDataPage (0)
+    setTimeout(() => {
+      this.setSelectedKey(this.recordData[0]['key'])
+    }, 1000)
   },
   computed: {
+    isRecorded () {
+      return this.soundUrl !== ''
+    },
     attemptsLeft () {
       return this.attempts - this.recorder.records.length
     },
@@ -270,8 +367,8 @@ export default {
 </script>
 <style scoped>
 .record-btn {
-  background-color: rgba(255,200,200,0.5);
-  border-color: rgba(255,200,200,0.2);
+  background-color: rgba(0,0,0,0.5);
+  border-color: rgba(0,0,0,0.2);
   border-width: 2px;
   width: 50px;
   height: 50px;

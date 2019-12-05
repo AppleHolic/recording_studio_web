@@ -13,6 +13,8 @@ This repository is on initial version.
 
 #### It's under development.
 
+- Related Repository : https://github.com/AppleHolic/recording_studio_api
+
 ## How to use
 
 - Environment : MacOS X

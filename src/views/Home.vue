@@ -9,13 +9,6 @@
           :soundBlob.sync="soundBlob"
           :isRecorderEnabled="isRecorderEnabled"
           ref="soundRef"/>
-
-        <!-- recorded sounds -->
-        <div id="record_player">
-          <audio controls="" name="media" ref="player">
-            <source v-bind:src="soundUrl" type="audio/wav" v-if="soundUrl !== ''">
-          </audio>
-        </div>
       </div>
     </div>
   </div>
@@ -26,16 +19,8 @@ export default {
   name: 'Home',
   data () {
     return {
-      soundUrl: '',
-      soundBlob: '',
-      convBlob: '',
-      isRecorderEnabled: true,
+
     };
-  },
-  mounted: function () {
-    this.$watch('soundUrl', function() {
-        this.$refs.player.load()
-    });
   },
   methods: {
     voice2Voice () {
@@ -52,11 +37,6 @@ export default {
       })
     }
   },
-  computed: {
-    isRecorded () {
-      return this.soundUrl !== ''
-    }
-  },
   components: {
     'sound-recorder' : SoundRecorder
   }
@@ -64,9 +44,6 @@ export default {
 </script>
 <style scoped>
 #recorder {
-  margin-top: 5vh;
-}
-#record_player {
   margin-top: 5vh;
 }
 .record_outer {
