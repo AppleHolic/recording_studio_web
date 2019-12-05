@@ -5,10 +5,10 @@
         <label for="pageField">Jump to : </label>
       </b-col>
       <b-col sm="2">
-        <b-form-input id="pageField" type="number"></b-form-input>
+        <b-form-input id="pageField" type="number" v-model="jumpIndex"></b-form-input>
       </b-col>
       <b-col sm="1">
-        <b-button variant="outline-primary">Go</b-button>
+        <b-button variant="outline-primary" @click="jumpToItem()">Go</b-button>
       </b-col>
       <b-col sm="3">
         <b-form-group>
@@ -284,6 +284,12 @@ export default {
       }, res => {
         console.log('falied to load page numbers', res)
       })
+    },
+    jumpToItem () {
+      this.getRecordDataPage(this.jumpIndex)
+      setTimeout(() => {
+        this.setSelectedKey(this.recordData[0]['key'])
+      }, 1000)
     },
     getRecordItem ( key ) {
       let _this = this
